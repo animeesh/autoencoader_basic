@@ -1,0 +1,22 @@
+{
+  "mcpServers": {
+    "Demo": {
+      "command": "/Library/Frameworks/Python.framework/Versions/3.13/bin/uv",
+      "args": [
+        "run",
+        "--with",
+        "mcp[cli]",
+        "mcp",
+        "run",
+        "/Volumes/Animesh-ssd/codeverse/claim-analytics/MCP_server/mcp-server-demo/main.py"
+      ]
+    },
+    "sqlite_mcp_server": {
+      "command": "python3",
+      "args": [
+        "-u",
+        "/Volumes/Animesh-ssd/hackathon/mcp-sqlite-server/new_sqlite_mcp.py"
+      ]
+    }
+  }
+}

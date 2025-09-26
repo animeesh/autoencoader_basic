@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCP Bridge UI</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        
+        .status {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            background: rgba(255,255,255,0.2);
+            margin-top: 10px;
+        }
+        
+        .content {
+            padding: 30px;
+        }
+        
+        .section {
+            margin-bottom: 30px;
+            padding: 25px;
+            border-radius: 10px;
+            background: #f8fafc;
+            border-left: 4px solid #4f46e5;
+        }
+        
+        .section h2 {
+            color: #1e293b;
+            margin-bottom: 15px;
+            font-size: 1.5rem;
+        }
+        
+        .tools-grid {
+            display: grid;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .tool-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .tool-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+        
+        .tool-name {
+            font-weight: 600;
+            color: #4f46e5;
+            margin-bottom: 5px;
+        }
+        
+        .tool-description {
+            color: #64748b;
+            font-size: 0.9rem;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #374151;
+        }
+        
+        input, textarea, select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+        
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: #4f46e5;
+        }
+        
+        button {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: transform 0.2s ease;
+        }
+        
+        button:hover {
+            transform: translateY(-1px);
+        }
+        
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .output {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Monaco', 'Consolas', monospace;
+            white-space: pre-wrap;
+            margin-top: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #4f46e5;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>MCP Bridge UI</h1>
+            <div class="status" id="status">
+                <span class="loading" id="loadingSpinner"></span>
+                Connecting...
+            </div>
+        </div>
+        
+        <div class="content">
+            <div class="section">
+                <h2>🔧 Available Tools</h2>
+                <button onclick="loadTools()">Refresh Tools</button>
+                <div class="tools-grid" id="toolsGrid">
+                    <div class="tool-card">
+                        <div class="tool-name">Click "Refresh Tools" to load available tools</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="section">
+                <h2>⚡ Execute Tool</h2>
+                <div class="form-group">
+                    <label for="toolSelect">Select Tool:</label>
+                    <select id="toolSelect" onchange="updateToolForm()">
+                        <option value="">Select a tool...</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="toolParams">Parameters (JSON):</label>
+                    <textarea id="toolParams" rows="4" placeholder='{"param1": "value1", "param2": "value2"}'>{}</textarea>
+                </div>
+                
+                <button onclick="executeTool()">Execute Tool</button>
+                
+                <div class="output" id="output" style="display: none;"></div>
+            </div>
+            
+            <div class="section">
+                <h2>🔍 Custom MCP Request</h2>
+                <div class="form-group">
+                    <label for="method">Method:</label>
+                    <input type="text" id="method" placeholder="tools/list">
+                </div>
+                
+                <div class="form-group">
+                    <label for="params">Params (JSON):</label>
+                    <textarea id="params" rows="3" placeholder="{}">{}</textarea>
+                </div>
+                
+                <button onclick="sendCustomRequest()">Send Request</button>
+                
+                <div class="output" id="customOutput" style="display: none;"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8000';
+        let availableTools = [];
+
+        // Check server status on load
+        window.onload = function() {
+            checkStatus();
+        };
+
+        async function checkStatus() {
+            try {
+                const response = await fetch(`${API_BASE}/health`);
+                const data = await response.json();
+                
+                const statusEl = document.getElementById('status');
+                const spinner = document.getElementById('loadingSpinner');
+                
+                if (data.status === 'healthy' && data.mcp_connected) {
+                    statusEl.innerHTML = '🟢 Connected to MCP Server';
+                    statusEl.style.background = 'rgba(34, 197, 94, 0.2)';
+                } else {
+                    statusEl.innerHTML = '🔴 MCP Server Disconnected';
+                    statusEl.style.background = 'rgba(239, 68, 68, 0.2)';
+                }
+            } catch (error) {
+                const statusEl = document.getElementById('status');
+                statusEl.innerHTML = '🔴 FastAPI Server Unreachable';
+                statusEl.style.background = 'rgba(239, 68, 68, 0.2)';
+            }
+        }
+
+        async function loadTools() {
+            try {
+                const response = await fetch(`${API_BASE}/tools`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    availableTools = data.result.tools || [];
+                    displayTools(availableTools);
+                    populateToolSelect(availableTools);
+                } else {
+                    throw new Error(data.error || 'Failed to load tools');
+                }
+            } catch (error) {
+                document.getElementById('toolsGrid').innerHTML = 
+                    `<div class="tool-card"><div class="tool-name">Error loading tools: ${error.message}</div></div>`;
+            }
+        }
+
+        function displayTools(tools) {
+            const grid = document.getElementById('toolsGrid');
+            
+            if (tools.length === 0) {
+                grid.innerHTML = '<div class="tool-card"><div class="tool-name">No tools available</div></div>';
+                return;
+            }
+            
+            grid.innerHTML = tools.map(tool => `
+                <div class="tool-card" onclick="selectTool('${tool.name}')">
+                    <div class="tool-name">${tool.name}</div>
+                    <div class="tool-description">${tool.description || 'No description available'}</div>
+                </div>
+            `).join('');
+        }
+
+        function populateToolSelect(tools) {
+            const select = document.getElementById('toolSelect');
+            select.innerHTML = '<option value="">Select a tool...</option>' +
+                tools.map(tool => `<option value="${tool.name}">${tool.name}</option>`).join('');
+        }
+
+        function selectTool(toolName) {
+            document.getElementById('toolSelect').value = toolName;
+            updateToolForm();
+        }
+
+        function updateToolForm() {
+            const toolName = document.getElementById('toolSelect').value;
+            const tool = availableTools.find(t => t.name === toolName);
+            
+            if (tool && tool.inputSchema) {
+                // Generate sample parameters based on schema
+                const sampleParams = generateSampleParams(tool.inputSchema);
+                document.getElementById('toolParams').value = JSON.stringify(sampleParams, null, 2);
+            }
+        }
+
+        function generateSampleParams(schema) {
+            const params = {};
+            if (schema.properties) {
+                for (const [key, prop] of Object.entries(schema.properties)) {
+                    switch (prop.type) {
+                        case 'string':
+                            params[key] = prop.example || `example_${key}`;
+                            break;
+                        case 'number':
+                        case 'integer':
+                            params[key] = prop.example || 42;
+                            break;
+                        case 'boolean':
+                            params[key] = prop.example || true;
+                            break;
+                        default:
+                            params[key] = prop.example || null;
+                    }
+                }
+            }
+            return params;
+        }
+
+        async function executeTool() {
+            const toolName = document.getElementById('toolSelect').value;
+            const paramsText = document.getElementById('toolParams').value;
+            
+            if (!toolName) {
+                alert('Please select a tool');
+                return;
+            }
+            
+            let parameters;
+            try {
+                parameters = JSON.parse(paramsText);
+            } catch (error) {
+                alert('Invalid JSON in parameters');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE}/tools/call`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        tool_name: toolName,
+                        parameters: parameters
+                    })
+                });
+                
+                const data = await response.json();
+                
+                const output = document.getElementById('output');
+                output.style.display = 'block';
+                output.textContent = JSON.stringify(data, null, 2);
+                
+            } catch (error) {
+                const output = document.getElementById('output');
+                output.style.display = 'block';
+                output.textContent = `Error: ${error.message}`;
+            }
+        }
+
+        async function sendCustomRequest() {
+            const method = document.getElementById('method').value;
+            const paramsText = document.getElementById('params').value;
+            
+            if (!method) {
+                alert('Please enter a method');
+                return;
+            }
+            
+            let params;
+            try {
+                params = JSON.parse(paramsText);
+            } catch (error) {
+                alert('Invalid JSON in params');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE}/mcp/request`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        method: method,
+                        params: params
+                    })
+                });
+                
+                const data = await response.json();
+                
+                const output = document.getElementById('customOutput');
+                output.style.display = 'block';
+                output.textContent = JSON.stringify(data, null, 2);
+                
+            } catch (error) {
+                const output = document.getElementById('customOutput');
+                output.style.display = 'block';
+                output.textContent = `Error: ${error.message}`;
+            }
+        }
+
+        // Auto-refresh status every 30 seconds
+        setInterval(checkStatus, 30000);
+    </script>
+</body>
+</html>
